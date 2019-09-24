@@ -22,16 +22,21 @@ int create_connection(){
     	bzero(&serv_addr,sizeof(serv_addr));
 		
     	//UPDATE LOG FOR A NEW USER OR USER CONNECTION ATTEMPT
-
+    	int port = 5000;
 		serv_addr.sin_family = AF_INET;
-    	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    	int port;
+    	serv_addr.sin_port = htons(port);
+    	//serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    	
+    	serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    	/*
     	for(port = 1024; port <= 49151; port++){
     		serv_addr.sin_port = htons(port);
 			if(bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) == 1)	
 				break;
-		}
-    	listen(listenfd,1000);
+		}*/
+		
+		bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     	return listenfd;
 	}
 }
@@ -80,6 +85,9 @@ int login(int connfd){
 				return -1;
 			}
 			else if(obj.type == 'A'){
+				lseek(user_info_fd,-sizeof(obj),SEEK_CUR);
+				obj.loggedin++;
+				write(user_info_fd,&obj,sizeof(obj));
 				write(connfd,itoa(obj.uid,10),STDBUFFERSIZE);
 				close(user_info_fd);
 				return obj.uid;
@@ -91,9 +99,9 @@ int login(int connfd){
 			}
 		}
 		else{
-			write(connfd,"-1",STDBUFFERSIZE);
+			write(connfd,"-2",STDBUFFERSIZE);
 			close(user_info_fd);
-			return -1;
+			return -2;
 		}
 	}
 	else{
@@ -147,6 +155,7 @@ void create_database(){
 	//Create database
 	int user_info_fd = open("Database/user_info_db",O_CREAT|O_RDWR,0744);
 	int train_info_fd = open("Database/train_info_db",O_CREAT|O_RDWR,0744);
+	int usre_train_fd = open("Database/user_train_info_db",O_CREAT|O_RDWR,0744);
 	struct train_info temp;
 	temp.train_number = 1010;
 	for(int i=0;i<30;i++)
@@ -161,6 +170,25 @@ void create_database(){
 	strcpy(obj.password,"admin");
 	obj.type = 'O';
 	obj.loggedin = 0;
+	write(user_info_fd,&obj,sizeof(obj));
+	close(user_info_fd);
+}
+
+/*
+ * Logs user out from server end
+ */
+void logout(int connfd){
+	int user_info_fd, uid;
+	struct user_info obj;
+	char readbuffer[STDBUFFERSIZE+5];
+	read(connfd,readbuffer,STDBUFFERSIZE);
+	uid = stoi(readbuffer);
+	user_info_fd = open("Database/user_info_db",O_RDWR,0744);
+	while(read(user_info_fd,&obj,sizeof(obj))){
+		if(uid == obj.uid)	break;
+	}
+	obj.loggedin--;
+	lseek(user_info_fd,-sizeof(obj),SEEK_CUR);
 	write(user_info_fd,&obj,sizeof(obj));
 	close(user_info_fd);
 }

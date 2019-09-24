@@ -25,7 +25,7 @@ int create_connection(char* IP){
 		// Implements linear search to find the next available port to establish connection
 		servaddr.sin_family = AF_INET; 
     	servaddr.sin_addr.s_addr = inet_addr((const char*)IP); 
-    	int flag,port;
+    	int flag,port = 5000;/*
 		for(port = 1024; port <= 49151; port++){
 			servaddr.sin_port = htons(port); 
 			if(connect(socketfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) != 0)
@@ -35,7 +35,10 @@ int create_connection(char* IP){
 				flag = 1;
 				break;
 			}
-		}
+		}*/
+		servaddr.sin_port = htons(port); 
+		connect(socketfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
+		flag = 1;
 		if(!flag){
 			console_to_red();
 			printf("Error: Connection with server failed. Try again later!\n");
@@ -127,14 +130,19 @@ int user_login(int socketfd){
 		write(socketfd,string,STDBUFFERSIZE);
 		memset(string,'\0',sizeof(string));
 		read(socketfd,string,STDBUFFERSIZE);
-		printf("%s\n",string);
 		int uid = stoi(string);
+		printf("here %d\n",uid);
 		if(uid == -1){
 			console_to_red();
-			printf("Incorrect password. Try again later!");
+			printf("Error: Multiple logins by user!\nTry again later!\n");
 			reset_color_console();
 			close(socketfd);
-			exit(0);
+		}
+		else if(uid == -2){
+			console_to_red();
+			printf("Error: Password does not match!\nTry again later!\n");
+			reset_color_console();
+			close(socketfd);
 		}
 		else
 			return uid;
@@ -152,4 +160,11 @@ int user_login(int socketfd){
 		}
 	}
 	
+}
+
+/*
+ * Logs out the user
+ */
+void user_logout(int socketfd,int uid){
+	write(socketfd,itoa(uid,10),STDBUFFERSIZE);
 }

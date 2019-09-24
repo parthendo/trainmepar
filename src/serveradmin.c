@@ -44,12 +44,11 @@ void print_train(int connfd){
 	read(connfd,readbuffer,STDBUFFERSIZE);
 	date = stoi(readbuffer);
 	while(read(train_info_fd,&obj,sizeof(obj))){
-		if(obj.ticket_count[date-1]){
-			write(connfd,itoa(obj.train_number,10),STDBUFFERSIZE);
-			write(connfd,itoa(obj.ticket_count[date-1],10),STDBUFFERSIZE);
-			write(connfd,obj.source,STDBUFFERSIZE);
-			write(connfd,obj.destination,STDBUFFERSIZE);
-		}
+		write(connfd,itoa(obj.train_number,10),STDBUFFERSIZE);
+		write(connfd,itoa(obj.ticket_count[date-1],10),STDBUFFERSIZE);
+		write(connfd,obj.source,STDBUFFERSIZE);
+		write(connfd,obj.destination,STDBUFFERSIZE);
+		
 	}
 	write(connfd,"-1",STDBUFFERSIZE);
 	close(train_info_fd);
@@ -207,9 +206,6 @@ void delete_user(int connfd){
 
 
 void runadmin(int connfd){
-	int flag = 0;
-	int user_info_fd;
-	struct user_info obj;
 	char readbuffer[STDBUFFERSIZE+5];
 	while(1){
 		read(connfd,readbuffer,STDBUFFERSIZE);
@@ -235,13 +231,8 @@ void runadmin(int connfd){
 				delete_user(connfd);
 			break;
 			case 7:
-				user_info_fd = open("Database/user_info_db",O_RDWR,0744);
-				read(user_info_fd,&obj,sizeof(obj));
-				//Logging admin off
-				obj.loggedin = 0;
-				flag = 1;
-			break;
+				logout(connfd);
+			return;
 		}
-		if(flag) break;
 	}
 }

@@ -20,6 +20,7 @@ struct train_info{
 };
 
 struct user_train_info{
+	int uid;
 	int train_number;
 	int date;
 };
@@ -29,5 +30,6 @@ struct user_train_info{
 int create_connection();
 int login(int);
 void create_database();
+void logout(int);
 
 #endif

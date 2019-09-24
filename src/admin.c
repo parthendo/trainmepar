@@ -1,4 +1,5 @@
-#include "admin.h"
+#include "utils.h"
+#include "userutils.h"
 
 /*
  * Add new train to the database
@@ -39,7 +40,7 @@ void add_train(int socketfd){
 void print_train(int socketfd){
 	char readbuffer[STDBUFFERSIZE+5];
 	int date;
-	printf("Enter your day of travel: ");
+	printf("Enter your date of travel: ");
 	scanf("%d",&date);
 	write(socketfd,itoa(date,10),STDBUFFERSIZE);
 	printf("Train Number\tDate\tSource\t\tDestination\n");
@@ -267,6 +268,7 @@ void admin_menu(int socketfd){
 				break;
 			case 7:
 				write(socketfd,"7",STDBUFFERSIZE);
+				user_logout(socketfd,1);
 				return;
 			default:
 				console_to_red();

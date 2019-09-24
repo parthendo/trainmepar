@@ -3,5 +3,5 @@
 
 int create_connection(char*);
 int user_login();
-
+int user_logout(int,int);
 #endif

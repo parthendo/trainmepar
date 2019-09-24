@@ -1,5 +1,4 @@
 #include "admin.h"
-#define extraspace(x) for(int i=0;i<x;i++)	printf(" ");
 
 /*
  * Add new train to the database
@@ -39,29 +38,24 @@ void add_train(int socketfd){
  */
 void print_train(int socketfd){
 	char readbuffer[STDBUFFERSIZE+5];
-	//tn = 12
-	//date = 30 100 each
-	printf("Train Number ");
-	for(int i=1;i<=30;i++){
-		printf("Day %d ",i);
-	}
-	printf("Source\tDestination\n");
+	int date;
+	printf("Enter your day of travel: ");
+	scanf("%d",&date);
+	write(socketfd,itoa(date,10),STDBUFFERSIZE);
+	printf("Train Number\tDate\tSource\t\tDestination\n");
 	while(1){
 		read(socketfd,readbuffer,STDBUFFERSIZE);
 		if(strcmp(readbuffer,"-1") == 0)
 			break;
 		//Print Train Number
 		int l = strlen(readbuffer);
-		printf("%s",readbuffer);
-		extraspace(12-l);
+		printf("%s\t\t",readbuffer);
 		//Print number of ticket day wise
-		for(int i=1;i<=30;i++){
-			read(socketfd,readbuffer,STDBUFFERSIZE);
-			printf("%s ",readbuffer);
-		}
+		read(socketfd,readbuffer,STDBUFFERSIZE);
+		printf("%s\t",readbuffer);
 		//Print Source
 		read(socketfd,readbuffer,STDBUFFERSIZE);
-		printf("%s ",readbuffer);
+		printf("%s\t\t",readbuffer);
 		//Print Destination
 		read(socketfd,readbuffer,STDBUFFERSIZE);
 		printf("%s\n",readbuffer);
@@ -187,7 +181,52 @@ void delete_train(int socketfd){
 /*
  * Prints users in the list
  */
+void print_user(int socketfd){
+	char readbuffer[STDBUFFERSIZE+5];
+	printf("UID\tUsername\tType\tLogged In Instances\n");
+	while(1){
+		read(socketfd,readbuffer,STDBUFFERSIZE);
+		if(strcmp(readbuffer,"-1") == 0)
+			break;
+		printf("%s\t",readbuffer);
+		read(socketfd,readbuffer,STDBUFFERSIZE);
+		printf("%s\t",readbuffer);
+		read(socketfd,readbuffer,STDBUFFERSIZE);
+		printf("%s\t",readbuffer);
+		read(socketfd,readbuffer,STDBUFFERSIZE);
+		printf("%s\n",readbuffer);
+	}	
+}
 
+/*
+ * Delete user
+ */
+void delete_user(int socketfd){
+	//Variables
+	int UID;
+	char readbuffer[STDBUFFERSIZE+5];
+	//Menu
+	console_to_cyan();
+	printf("See the user in the below table and select the user number you want to delete\n\n");
+	console_to_blue();
+	print_user(socketfd);
+	console_to_green();
+	
+	printf("Enter the UID: ");
+	scanf("%d",&UID);
+	//Check if UID exists in the database
+	write(socketfd,itoa(UID,10),STDBUFFERSIZE);
+	read(socketfd,readbuffer,STDBUFFERSIZE);
+	clearconsole;
+	if(strcmp(readbuffer,"1") == 0){
+		console_to_green();
+		printf("UID %d is deleted from the database\n",UID);
+	}
+	else{
+		delete_user(socketfd);
+		return;
+	}
+}
 
 void admin_menu(int socketfd){
 
@@ -228,7 +267,7 @@ void admin_menu(int socketfd){
 				break;
 			case 7:
 				write(socketfd,"7",STDBUFFERSIZE);
-				break;
+				return;
 			default:
 				console_to_red();
 				clearconsole;

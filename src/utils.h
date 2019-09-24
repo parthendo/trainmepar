@@ -2,6 +2,7 @@
 #define	UTILS_H
 
 #include <stdio.h>
+#include <math.h>
 #include <sys/socket.h> 
 #include <netdb.h>
 #include <stdlib.h>
@@ -9,6 +10,8 @@
 #include <string.h>
 #include <math.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -24,7 +27,7 @@
 void display_initial();
 
 int stoi(char*);
-void itos(int,char[]);
+char* itoa(int,int);
 void console_to_red();
 void console_to_green();
 void console_to_yellow();

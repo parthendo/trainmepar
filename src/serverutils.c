@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "serverutils.h"
 
 /*
  * Connects on the server end. Updates log
@@ -37,28 +38,129 @@ int create_connection(){
 
 /*
  *	Login or new user
+ * Returns 0 when admin, 1 when user/agent
+ * -1 in all other cases
  */
-void login(int listenfd){
+int login(int connfd){
 	//Data variables
 	char username[STDBUFFERSIZE+5],password[STDBUFFERSIZE+5],type[STDBUFFERSIZE+5];
 
 	//Accept connection
-	int connfd = accept(listenfd,(struct sockaddr*)NULL,NULL);
 	read(connfd,username,STDBUFFERSIZE);
-	printf("USERNAME INPUT: %s",username);
-	//#############SEARCH USERNAME#############
-	if(strcmp(username,"admin") == 0){
+
+	//Searching user in the database
+	int user_info_fd = open("Database/user_info_db",O_RDWR,0744);
+	struct user_info obj;
+	int flag = 0;
+	while(read(user_info_fd,&obj,sizeof(obj))){
+		if(strcmp(obj.username,username) == 0){
+			flag = 1;
+			break;
+		}
+	}
+	if(flag){
 		write(connfd,"1",STDBUFFERSIZE);
 		read(connfd,password,STDBUFFERSIZE);
-		if(strcmp(password,"admin") == 0){
+		if(strcmp(password,obj.password) == 0){
 			printf("ACCESS GRANTED!!\n");
-			//#############RETURN UID//#############
-			write(connfd,"1",STDBUFFERSIZE);
+			if(obj.type == 'U' && obj.loggedin == 0){
+				
+				// Updating logged in status to 1
+				// User session begins
+				lseek(user_info_fd,-sizeof(obj),SEEK_CUR);
+				obj.loggedin = 1;
+				write(user_info_fd,&obj,sizeof(obj));
+				write(connfd,itoa(obj.uid,10),STDBUFFERSIZE);
+				close(user_info_fd);
+				return obj.uid;
+			}
+			else if(obj.type == 'U' && obj.loggedin == 1){
+				write(connfd,"-1",STDBUFFERSIZE);
+				close(user_info_fd);
+				return -1;
+			}
+			else if(obj.type == 'A'){
+				write(connfd,itoa(obj.uid,10),STDBUFFERSIZE);
+				close(user_info_fd);
+				return obj.uid;
+			}
+			else if(obj.type == 'O'){
+				write(connfd,itoa(obj.uid,10),STDBUFFERSIZE);
+				close(user_info_fd);
+				return obj.uid;	
+			}
 		}
-		else
+		else{
 			write(connfd,"-1",STDBUFFERSIZE);
+			close(user_info_fd);
+			return -1;
+		}
 	}
 	else{
-		printf("NEW USER COMING SOON");
+		write(connfd,"-1",STDBUFFERSIZE);
+		lseek(user_info_fd,-sizeof(obj),SEEK_CUR);
+		read(user_info_fd,&obj,sizeof(obj));
+		int new_UID = obj.uid+1;
+		while(1){
+			memset(username,'\0',sizeof(username));
+			read(connfd,username,STDBUFFERSIZE);
+			user_info_fd = open("Database/user_info_db",O_RDWR,0744);
+			int flg = 0;
+			while(read(user_info_fd,&obj,sizeof(obj))){
+				if(strcmp(username,obj.username) == 0){
+					flg = 1;
+					break;
+				}
+			}
+			if(flg == 0){
+				write(connfd,"1",STDBUFFERSIZE);
+				break;
+			}
+			else{
+				write(connfd,"0",STDBUFFERSIZE);
+			}
+		}
+		memset(type,'\0',sizeof(type));
+		read(connfd,type,STDBUFFERSIZE);
+		memset(password,'\0',sizeof(password));
+		read(connfd,password,STDBUFFERSIZE);
+		strcpy(obj.username,username);
+		strcpy(obj.password,password);
+		obj.uid = new_UID;
+		obj.loggedin = 1;
+		obj.type = type[0];
+		//Reach the end of file
+		lseek(user_info_fd,0,SEEK_END);
+		write(user_info_fd,&obj,sizeof(obj));
+		close(user_info_fd);
+		write(connfd,itoa(new_UID,10),STDBUFFERSIZE);
+		return new_UID;
 	}
+}
+
+
+/*
+ * Creates database files for user_info and train_info
+ * Also enters the entry for the admin in users
+ */
+void create_database(){
+	//Create database
+	int user_info_fd = open("Database/user_info_db",O_CREAT|O_RDWR,0744);
+	int train_info_fd = open("Database/train_info_db",O_CREAT|O_RDWR,0744);
+	struct train_info temp;
+	temp.train_number = 1010;
+	for(int i=0;i<30;i++)
+		temp.ticket_count[i] = 100;
+	strcpy(temp.source,"Kanpur");
+	strcpy(temp.destination,"Bangalore");
+	write(train_info_fd,&temp,sizeof(temp));
+	close(train_info_fd);
+	struct user_info obj;
+	obj.uid = 1;
+	strcpy(obj.username,"admin");
+	strcpy(obj.password,"admin");
+	obj.type = 'O';
+	obj.loggedin = 0;
+	write(user_info_fd,&obj,sizeof(obj));
+	close(user_info_fd);
 }

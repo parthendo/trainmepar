@@ -67,7 +67,7 @@ int create_new_user(int socketfd){
 		scanf("%s",username);
 		write(socketfd,username,STDBUFFERSIZE);
 		read(socketfd,string,STDBUFFERSIZE);
-		if(string == "1")
+		if(strcmp(string,"1") == 0)
 			break;
 		else{
 			clearconsole;
@@ -78,11 +78,12 @@ int create_new_user(int socketfd){
 	printf("Type(U/A): ");
 	while(1){
 		scanf("%s",type);
-		if(strcmp(type,"U") || strcmp(type,"A")){
+		if(!strcmp(type,"U") || !strcmp(type,"A")){
 			write(socketfd,type,STDBUFFERSIZE);
 			break;
 		}
 		else{
+			clearconsole;
 			console_to_magenta();
 			printf("\tRegister new user:\n");
 			printf("Username: %s\nType(U/A): ",username);
@@ -126,6 +127,7 @@ int user_login(int socketfd){
 		write(socketfd,string,STDBUFFERSIZE);
 		memset(string,'\0',sizeof(string));
 		read(socketfd,string,STDBUFFERSIZE);
+		printf("%s\n",string);
 		int uid = stoi(string);
 		if(uid == -1){
 			console_to_red();

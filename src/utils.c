@@ -49,18 +49,13 @@ int stoi(char* str){
 	return num;
 }
 
-/*
- * Convert int to string
- */
-void itos(int n,char str[100]){
-	int idx = 0;
-	while(n>0){
-		int p = n%10;
-		str[idx++] = '0'+p;
-	}
-	for(int i=0;i<idx;i++){
-		char temp = str[i];
-		str[i] = str[idx-i-1];
-		str[idx-i-1] = temp;
-	}
+char* itoa(int val, int base){
+	
+	static char buf[32] = {0};
+	int i = 30;
+	for(; val && i ; --i, val /= base)
+		buf[i] = "0123456789abcdef"[val % base];
+	return &buf[i+1];
+	
 }
+	

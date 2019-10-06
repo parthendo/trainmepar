@@ -49,6 +49,11 @@ void book_ticket(int socketfd){
 		scanf("%s",readbuffer);
 		write(socketfd,&readbuffer,STDBUFFERSIZE);
 		read(socketfd,&readbuffer1,STDBUFFERSIZE);
+
+		if(strcmp(readbuffer1,"-2")==0){
+			printf("someone is accessing a train , Try again later!");
+			return;
+		}
 		if(strcmp(readbuffer1,"-1")==0){
 			console_to_red();
 			printf("\n Enter Correct train Number");
@@ -79,7 +84,28 @@ void ticket_history(int socketfd, int uid){
 		printf("%s\n",readbuffer);
 	}	
 }
+void cancel_ticket(int socketfd,int uid){
+	char readbuffer[STDBUFFERSIZE+5];
+	printf("See the ticket history in the below table and select the train number you want to cancel ticket\n\n");
+	ticket_history(socketfd,uid);
+	printf("Enter Train Number \n");
+	scanf("%s",readbuffer);
+	write(socketfd,readbuffer,STDBUFFERSIZE);
+	printf("Enter Date which ticket do you want cancel\n");
+	scanf("%s",readbuffer);
+	write(socketfd,readbuffer,STDBUFFERSIZE);
+	read(socketfd,readbuffer,STDBUFFERSIZE);
+	if(strcmp(readbuffer,"-1")==0){
+		console_to_red();
+		printf("\n Enter Correct train Number and Date");
+		return;
+	}
 
+	clearconsole;
+	console_to_magenta();
+	printf("\n Ticket Cancel successfully\n");
+	reset_color_console();
+}
 
 void user_menu(int socketfd,int uid){
 
@@ -98,6 +124,7 @@ void user_menu(int socketfd,int uid){
 			break;
 			case 3:
 				write(socketfd,"3",STDBUFFERSIZE);
+				cancel_ticket(socketfd,uid);
 			break;
 			case 4:
 				write(socketfd,"4",STDBUFFERSIZE);

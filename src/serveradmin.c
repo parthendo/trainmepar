@@ -1,6 +1,13 @@
 #include "utils.h"
 #include "serverutils.h"
 
+
+/*struct flock fl;
+	memset(&fl, 0, sizeof(fl));
+	fl.l_type = F_WRLCK;
+	fl.l_whence = SEEK_SET;
+	fl.l_start = 0;
+	fl.l_len = sizeof(struct train_info);*/
 /*
  * Add train to database
  */
@@ -58,6 +65,12 @@ void print_train(int connfd){
  * Modify train on server end
  */
 void modify_train(int connfd){
+	struct flock fl;
+	memset(&fl, 0, sizeof(fl));
+	fl.l_type = F_WRLCK;
+	fl.l_whence = SEEK_CUR;
+	fl.l_start = 0;
+	fl.l_len = sizeof(struct train_info);
 	int train_no,choice;
 	char readbuffer[STDBUFFERSIZE+5];
 	struct train_info obj;
@@ -68,15 +81,24 @@ void modify_train(int connfd){
 	int train_info_fd = open("Database/train_info_db",O_RDWR,0744);
 	//########IMPLEMENT FILE LOCKING HERE#############
 	int flag = 0;
+
 	while(read(train_info_fd,&obj,sizeof(obj))){
 		if(obj.train_number == train_no){
-			write(connfd,"1",STDBUFFERSIZE);
+			lseek(train_info_fd,-sizeof(obj),SEEK_CUR);
+			
+			if(fcntl(train_info_fd, F_SETLK, &fl) == -1){
+				write(connfd, "-2",STDBUFFERSIZE);
+				close(train_info_fd);
+				return ;
+			}
+		
+		write(connfd,"1",STDBUFFERSIZE);
 			flag = 1;
 			break;
 		}
 	}
 	if(flag){
-		lseek(train_info_fd,-sizeof(obj),SEEK_CUR);
+		
 		read(connfd,readbuffer,STDBUFFERSIZE);
 		choice = stoi(readbuffer);
 		if(choice == 1){
@@ -105,6 +127,12 @@ void modify_train(int connfd){
 }
 
 void delete_train(int connfd){
+	struct flock fl;
+    memset(&fl, 0, sizeof(fl));
+	fl.l_type = F_WRLCK;
+	fl.l_whence = SEEK_CUR;
+	fl.l_start = 0;
+	fl.l_len = sizeof(struct train_info);
 	int train_no,choice;
 	char readbuffer[STDBUFFERSIZE+5];
 	struct train_info obj;
@@ -114,9 +142,17 @@ void delete_train(int connfd){
 	train_no = stoi(readbuffer);
 	int train_info_fd = open("Database/train_info_db",O_RDWR,0744);
 	//########IMPLEMENT FILE LOCKING HERE#############
+	
 	int flag = 0;
 	while(read(train_info_fd,&obj,sizeof(obj))){
 		if(obj.train_number == train_no){
+			lseek(train_info_fd,-sizeof(obj),SEEK_CUR);
+			
+			if(fcntl(train_info_fd, F_SETLK, &fl) == -1){
+				write(connfd, "-2",STDBUFFERSIZE);
+				close(train_info_fd);
+				return ;
+			}
 			write(connfd,"1",STDBUFFERSIZE);
 			flag = 1;
 			break;
@@ -147,6 +183,7 @@ void delete_train(int connfd){
  */
 
 void display_user(int connfd){
+
 	int user_info_fd = 	open("Database/user_info_db",O_RDWR,0744);
 	struct user_info obj;
 	while(read(user_info_fd,&obj,sizeof(obj))){
@@ -167,6 +204,12 @@ void display_user(int connfd){
  */
 
 void delete_user(int connfd){
+	struct flock fl;
+    memset(&fl, 0, sizeof(fl));
+	fl.l_type = F_WRLCK;
+	fl.l_whence = SEEK_CUR;
+	fl.l_start = 0;
+	fl.l_len = sizeof(struct user_info);
 	int UID,choice;
 	char readbuffer[STDBUFFERSIZE+5];
 	struct user_info obj;
@@ -179,6 +222,12 @@ void delete_user(int connfd){
 	int flag = 0;
 	while(read(user_info_fd,&obj,sizeof(obj))){
 		if(obj.uid == UID){
+			lseek(user_info_fd,-sizeof(obj),SEEK_CUR);
+			if(fcntl(user_info_fd, F_SETLK, &fl) == -1){
+				write(connfd, "-2",STDBUFFERSIZE);
+				close(user_info_fd);
+				return ;
+			}
 			write(connfd,"1",STDBUFFERSIZE);
 			flag = 1;
 			break;

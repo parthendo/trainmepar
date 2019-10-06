@@ -83,6 +83,10 @@ void modify_train(int socketfd){
 	//Check if train exists in the database
 	write(socketfd,itoa(train_no,10),STDBUFFERSIZE);
 	read(socketfd,readbuffer,STDBUFFERSIZE);
+	if(strcmp(readbuffer,"-2")==0){
+		printf("someone is accessing a train , Try again later!");
+		return;
+	}
 	clearconsole;
 	if(strcmp(readbuffer,"1") == 0){
 		while(1){
@@ -168,6 +172,10 @@ void delete_train(int socketfd){
 	//Check if train exists in the database
 	write(socketfd,itoa(train_no,10),STDBUFFERSIZE);
 	read(socketfd,readbuffer,STDBUFFERSIZE);
+	if(strcmp(readbuffer,"-2")==0){
+		printf("someone is accessing a train , Try again later!");
+		return;
+	}
 	clearconsole;
 	if(strcmp(readbuffer,"1") == 0){
 		console_to_green();
@@ -218,6 +226,10 @@ void delete_user(int socketfd){
 	//Check if UID exists in the database
 	write(socketfd,itoa(UID,10),STDBUFFERSIZE);
 	read(socketfd,readbuffer,STDBUFFERSIZE);
+	if(strcmp(readbuffer,"-2")==0){
+		printf("someone is accessing a user data , Try again later!");
+		return;
+	}
 	clearconsole;
 	if(strcmp(readbuffer,"1") == 0){
 		console_to_green();

@@ -25,7 +25,8 @@ int create_connection(char* IP){
 		// Implements linear search to find the next available port to establish connection
 		servaddr.sin_family = AF_INET; 
     	servaddr.sin_addr.s_addr = inet_addr((const char*)IP); 
-    	int flag,port = 5000;/*
+	//inet_aton(IP, &servaddr.sin_addr);    	
+	int flag,port = 5000;/*
 		for(port = 1024; port <= 49151; port++){
 			servaddr.sin_port = htons(port); 
 			if(connect(socketfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) != 0)
